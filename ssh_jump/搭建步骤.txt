@@ -1,0 +1,6 @@
+一.在跳板机上执行命令
+ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa >/dev/null 2>&1
+二.将跳板机下公钥拷贝到目标机
+ssh-copy-id -i ~/.ssh/id_dsa.pub 192.168.2.93
+三.配置跳板机脚本
+jump.sh
