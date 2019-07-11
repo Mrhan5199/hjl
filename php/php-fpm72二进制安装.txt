@@ -1,0 +1,152 @@
+yum groupinstall "Development Tools"
+yum -y install libxml2-devel openssl-devel libcurl-devel gd-devel gmp-devel libicu-devel recode recode-devel libxslt libxslt-devel bzip2 bzip2-devel
+wget http://mirrors.sohu.com/php/php-7.2.6.tar.gz
+tar zxvf php-7.2.6.tar.gz
+cd php-7.2.6/
+./configure \
+--prefix=/usr/local/php72 \
+--with-config-file-path=/usr/local/php72/etc \
+--disable-debug \
+--disable-phpdbg \
+--enable-mysqlnd \
+--enable-bcmath \
+--with-bz2=/usr \
+--enable-calendar \
+--with-curl \
+--enable-exif \
+--enable-fpm \
+--with-fpm-user=www \
+--with-fpm-group=www \
+--with-freetype-dir \
+--enable-ftp \
+--with-gd \
+--enable-gd-jis-conv \
+--with-gettext=/usr \
+--with-gmp \
+--with-iconv \
+--with-iconv-dir=/usr/local/libiconv \
+--enable-intl \
+--with-jpeg-dir \
+--enable-mbstring \
+--with-openssl \
+--with-mhash \
+--enable-pcntl \
+--with-pdo-mysql=mysqlnd \
+--with-png-dir \
+--with-recode \
+--enable-shmop \
+--enable-soap \
+--enable-sockets \
+--enable-sysvmsg \
+--enable-sysvsem \
+--enable-sysvshm \
+--enable-wddx \
+--with-xmlrpc \
+--with-xsl \
+--with-zlib=/usr \
+--enable-zip \
+--with-libxml-dir=/usr \
+--enable-xml \
+--with-mysqli=mysqlnd \
+--enable-fileinfo \
+--enable-opcache \
+--with-libdir=lib64 \
+--enable-maintainer-zts
+make && make install
+cp php.ini-development /usr/local/php72/etc/php.ini
+修改php.ini配置
+vim /usr/local/php72/etc/php.ini
+# 找到 ;cgi.fix_pathinfo=1 修改为
+cgi.fix_pathinfo=0
+# 找到 ;date.timezone = 修改为
+date.timezone = PRC
+查看版本
+/usr/local/php72/bin/php -v
+
+PHP 7.2.6 (cli) (built: Jun  7 2018 11:08:13) ( ZTS )
+Copyright (c) 1997-2018 The PHP Group
+Zend Engine v3.2.0, Copyright (c) 1998-2018 Zend Technologies
+
+配置php-fpm
+修改php-fpm配置文件
+cp /usr/local/php72/etc/php-fpm.conf.default /usr/local/php72/etc/php-fpm.conf
+
+vi /usr/local/php72/etc/php-fpm.conf
+
+# 找到 ;pid = run/php-fpm.pid 修改为
+
+pid = /usr/local/php72/var/run/php-fpm.pid
+
+修改www.conf
+cp /usr/local/php72/etc/php-fpm.d/www.conf.default /usr/local/php72/etc/php-fpm.d/www.conf
+vi /usr/local/php72/etc/php-fpm.d/www.conf
+
+user = www
+group = www
+
+# 找到 listen = 127.0.0.1:9000 如果启了php5 或其它 9000端口被占用的话 修改为
+listen = 127.0.0.1:9001
+
+配置 php-fpm 启动脚本 注册为系统服务 设置开机启动
+cp ./sapi/fpm/php-fpm /usr/local/php72/bin
+cp ./sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm72
+将/etc/init.d/php-fpm72开始的注释部分php-fpm改为php-fpm72 虽然是注释，但在Linux下注册系统服务要求的格式；如果你不注册为系统服务则不需要改；
+vi /etc/init.d/php-fpm72
+
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          php-fpm72
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts php-fpm72
+# Description:       starts the PHP FastCGI Process Manager daemon
+### END INIT INFO
+
+授予可执行权限
+chmod +x /etc/init.d/php-fpm72
+添加php-fpm72至服务列表并设置开机自启
+chkconfig --add php-fpm72
+chkconfig --list php-fpm72
+chkconfig php-fpm72 on
+php-fpm72 几个参数 start|stop|force-quit|restart|reload|status|configtest
+service php-fpm72 start       # 启动服务
+service php-fpm72 stop        # 停止服务
+service php-fpm72 restart     # 重启服务
+service php-fpm72 reload      # 平滑重启服务
+service php-fpm72 force-quit  # 强制退出服务
+service php-fpm72 status      # 查看服务状态
+service php-fpm72 configtest  # 检查配置
+
+启动php-fpm72服务
+service php-fpm72 configtest   # 检查配置 显示如下 说明配置没有问题
+
+# [07-Jun-2018 11:53:45] NOTICE: configuration file /usr/local/php72/etc/php-fpm.conf test is successful
+
+service php-fpm72 start        # 启动
+
+# Starting php-fpm  done 启动成功
+
+修改nginx.conf配置 新增server
+vi nginx.conf
+server
+{
+    listen       80;
+    server_name  dev.php72.gocuber.com;
+    index index.html index.htm index.php;
+    root  /data0/vhosts/php72;
+
+    location ~* \.php$ {
+        fastcgi_index   index.php;
+        fastcgi_pass    127.0.0.1:9001;
+        include         fastcgi_params;
+        fastcgi_param   SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+        fastcgi_param   SCRIPT_NAME        $fastcgi_script_name;
+    }
+
+    access_log  /data0/logs/wwwlogs.log  wwwlogs;
+}
+
+
