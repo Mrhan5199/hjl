@@ -1,0 +1,1 @@
+for i in `ls`; do for j in `echo $i|cut -d . -f1`; do mv $i $j.xml; done; done
