@@ -1,0 +1,55 @@
+version: '3.7'
+services:
+  mysql:
+    container_name: mysql
+    image: registry.cn-hangzhou.aliyuncs.com/qidian_registry/mysql:5.17
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+      - /usr/local/src/my.cnf:/etc/my.cnf
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime
+      - /usr/local/freeswitch/recordings/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=Zswitch69686996
+    networks:
+      - code-network
+  web:
+    container_name: zsitsms
+    image: registry.cn-hangzhou.aliyuncs.com/qidian_registry/php:5.2
+    restart: always
+    ports:
+      - 8086:8086
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime
+      - /var/www/html/:/var/www/html/
+      - /usr/local/freeswitch/recordings/:/var/www/html/zsitsms/downloads/recordings/
+    networks:
+      - code-network
+  icproxy:
+    container_name: icproxy
+    image: registry.cn-hangzhou.aliyuncs.com/qidian_registry/icproxy:latest
+    restart: always
+    networks:
+      - code-network
+  freeswitch:
+    container_name: freeswitch
+    image: registry.cn-hangzhou.aliyuncs.com/qidian_registry/freeswitch:latest
+    restart: always
+    ports:
+      - 8060:5060/tcp
+      - 8080:5080/tcp
+      - 8024:8024/tcp
+      - 8089:8089/tcp
+      - 8060:5060/udp
+      - 8080:5080/udp
+    volumes:
+	  - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime
+      - /usr/local/src/conf:/usr/local/freeswitch/conf
+      - /usr/local/freeswitch/scripts:/usr/local/freeswitch/scripts
+      - /usr/local/freeswitch/recordings:/usr/local/freeswitch/recordings
+    networks:
+      - code-network
+networks:
+  code-network:
+    driver: bridge
