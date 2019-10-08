@@ -13,7 +13,7 @@ def db_select():
     return api.executeString("db select/gateway_route/current_pos")
 
 def db_exists():
-    if not api.executeString("db exists/gateway_route/current_pos"):
+    if not api.executeString("db select/gateway_route/current_pos"):
         api.executeString("db insert/gateway_route/current_pos/0")
 
 def handler(session, args):
