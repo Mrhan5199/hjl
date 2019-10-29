@@ -11,6 +11,7 @@ IPADDR=192.168.2.199
 NETMASK=255.255.255.0
 GATEWAY=192.168.2.1
 二.关闭“一致性网络设备命名法”
+cat /etc/sysconfig/grub  #编辑内核信息
 ##添加 net.ifnames=0 biosdevname=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
