@@ -1,0 +1,74 @@
+version: '3'
+services:
+  zabbix-server:
+    image: "zabbix/zabbix-server-mysql:centos-4.4-latest"
+    container_name: "zabbix-server"
+    restart: "always"
+    environment:
+      - "DB_SERVER_HOST=zabbix-mysql"
+      - "MYSQL_USER=zabbix"
+      - "MYSQL_DATABASE=zabbix"
+      - "MYSQL_PASSWORD=Zswitch69686996"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/usr/local/freeswitch/recordings/zabbix/alertscripts:/usr/lib/zabbix/alertscripts"
+      - "/usr/local/freeswitch/recordings/zabbix/externalscripts:/usr/lib/zabbix/externalscripts"
+    links:
+      - "zabbix-mysql:mysql"
+    depends_on:
+      - "zabbix-mysql"
+    ports:
+      - "10051:10051"
+    networks:
+      - zabbix-network
+  zabbix-web:
+    image: "zabbix/zabbix-web-nginx-mysql:centos-4.4-latest"
+    container_name: "zabbix-web"
+    restart: "always"
+    environment:
+      - "DB_SERVER_HOST=zabbix-mysql"
+      - "MYSQL_USER=zabbix"
+      - "MYSQL_DATABASE=zabbix"
+      - "MYSQL_PASSWORD=Zswitch69686996"
+      - "ZBX_SERVER_HOST=zabbix-server"
+      - "PHP_TZ=Asia/Shanghai"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+    links:
+      - "zabbix-server:zabbix-server"
+      - "zabbix-mysql:mysql"
+    depends_on:
+      - "zabbix-server"
+      - "zabbix-mysql"
+    ports:
+      - "8000:80"
+      - "8443:443"
+    networks:
+      - zabbix-network
+  zabbix-mysql:
+    image: "mysql:5.7.27"
+    command: [
+            '--character-set-server=utf8',
+            '--collation-server=utf8_bin'
+            ]
+    container_name: "zabbix-mysql"
+    restart: "always"
+    environment:
+      - "MYSQL_ROOT_PASSWORD=Zswitch69686996"
+      - "MYSQL_USER=zabbix"
+      - "MYSQL_DATABASE=zabbix"
+      - "MYSQL_PASSWORD=Zswitch69686996"
+      - "LANG=en_US.utf8"
+      - "TZ=Asia/shanghai"
+    ports:
+      - "33066:3306"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/usr/local/freeswitch/recordings/zabbix/mysql:/var/lib/mysql"
+    networks:
+      - zabbix-network
+networks:
+  zabbix-network:
+    driver: bridge
