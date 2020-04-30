@@ -35,7 +35,7 @@ function check_gateway_limits(key,limits)
 	    	api:executeString("db insert/call_limit_last_count_of_day/data_time/"..last_day)
 	else
         	last_day = api:executeString("db select/call_limit_last_count_of_day/data_time")
-    	end
+    end
 	local count = 0
 	if api:executeString("db exists/call_limit_value_count_of_day/"..key) == "false" then
 		api:executeString("db insert/call_limit_value_count_of_day/"..key.."/0")
@@ -45,21 +45,19 @@ function check_gateway_limits(key,limits)
 	local current_time = os.date("%Y%m%d")
 	if current_time ~= last_day then
 		count = 0
-		api:executeString("db delete/call_limit_value_count_of_day/data_time")
+		api:executeString("db delete/call_limit_last_count_of_day/data_time")
 		local keys = string_spilt(api:executeString("db list/call_limit_value_count_of_day/"),",")
 		for k,v in ipairs(keys) do
             		api:executeString("db delete/call_limit_value_count_of_day/"..v)		
 		end	
+		api:executeString("db insert/call_limit_last_count_of_day/data_time/"..current_time)
 	end
 	freeswitch.consoleLog("info","Limit the number of calls per day,'"..key.."',limits:"..limits..",count:"..count..".\n")
 	if count < limits then
 		count = count + 1 
 		api:executeString("db insert/call_limit_value_count_of_day/"..key.."/"..count)
-		api:executeString("db insert/call_limit_last_count_of_day/data_time/"..current_time)
 		return true
 	else
-		interface_str = string.match(api:executeString("sofia status gateway "..key),"Profile%s+(%a+)") 
-		--api:executeString("sofia profile "..interface_str.."killgw "..key)
 	    	return false
    	end
 	
@@ -85,7 +83,7 @@ for i in myfile:lines() do
 	gw[index] = i
 	index = index+1
 end
-
+myfile:close()
 if api:executeString("db exists/gateway_route/current_pos") == "false" then
 	api:executeString("db insert/gateway_route/current_pos/0")
 end
@@ -129,4 +127,4 @@ while true do
 	end
 end
 
-myfile:close()
+
