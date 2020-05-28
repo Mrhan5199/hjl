@@ -1,0 +1,39 @@
+version: '3'
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    hostname: 'gitlab.mrhan.cloud'
+    restart: always
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://gitlab.mrhan.cloud'
+        gitlab_rails['gitlab_ssh_host'] = 'gitlab.mrhan.cloud'
+        gitlab_rails['gitlab_shell_ssh_port'] = 8022
+        nginx['redirect_http_to_https'] = true
+        nginx['ssl_certificate'] = "/etc/gitlab/trusted-certs/fullchain1.pem"
+        nginx['ssl_certificate_key'] = "/etc/gitlab/trusted-certs/privkey1.pem"
+    ports:
+      - "8001:443"
+      - "8022:22"
+    volumes:
+      - /etc/letsencrypt/archive/gitlab.mrhan.cloud:/etc/gitlab/trusted-certs
+      - /srv/gitlab/config:/etc/gitlab
+      - /srv/gitlab/logs:/var/log/gitlab
+      - /srv/gitlab/data:/var/opt/gitlab
+    networks:
+      - gitlab-network
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - /srv/gitlab-runner/config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - gitlab-network
+    links:
+      - gitlab
+networks:
+  gitlab-network:
+    driver: bridge                                                        
